@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+baseWallDir=~/.config/cosmic/walls
+
+wallDir="$baseWallDir"
+
+indexFile=~/.config/cosmic/wallIndex
+
+wallIndex=$(cat $indexFile)
+
+mapfile array < <(ls $wallDir)
+
+arrayLength=${#array[@]}
+
+if ((((wallIndex + 1)) >= arrayLength)); then
+  echo 0 >$indexFile
+fi
+
+swaybg -m fill -i "$wallDir""/"${array[$((wallIndex))]} &

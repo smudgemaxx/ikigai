@@ -1,0 +1,27 @@
+
+[global]
+
+width = 300
+height = 100
+
+origin = top-right
+offset = (10, 10)
+gap_size = 8
+
+frame_width = 0
+font = Caskaydia Cove Nerd Font 12
+
+sort = update
+
+[urgency_low]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+
+[urgency_normal]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+
+[urgency_critical]
+background = "#1e1e2e"
+foreground = "#f38ba8"
+

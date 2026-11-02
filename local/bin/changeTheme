@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+export PATH="$HOME/.local/bin:$PATH"
+
+BASE_DIR="$HOME/.config/cosmic/config"
+
+gtk3="$HOME/.config/gtk-3.0/settings.ini"
+gtk4="$HOME/.config/gtk-4.0/settings.ini"
+
+# List the available themes, one per line.
+list_themes() {
+  find "$BASE_DIR/alacritty" -name "*.toml" ! -name "current-theme.toml" ! -name "alacritty.toml" -printf "%f\n" |
+    sed 's/\.toml$//' | sort
+}
+
+# Kept so other menus can still query the list without opening rofi.
+if [[ "${1:-}" == "--list" ]]; then
+  list_themes
+  exit 0
+fi
+
+# Use the theme passed as an argument, otherwise prompt with rofi.
+if [[ -n "${1:-}" ]]; then
+  choice="$1"
+else
+  choice=$(list_themes | rofi -dmenu -i -p "Theme" -theme-str 'entry { placeholder: "Themes"; }')
+fi
+
+[[ -z "$choice" ]] && exit 1
+
+if [[ ! -f "$BASE_DIR/alacritty/$choice.toml" ]]; then
+  echo "Unknown theme: $choice" >&2
+  exit 1
+fi
+
+ln -snf "$BASE_DIR/alacritty/$choice.toml" "$BASE_DIR/alacritty/current-theme"
+ln -snf "$BASE_DIR/rofi/$choice.rasi" "$BASE_DIR/rofi/current-theme"
+ln -snf "$BASE_DIR/waybar/$choice.css" "$BASE_DIR/waybar/current-theme"
+ln -snf "$BASE_DIR/dunst/dunstrc.d/$choice" "$BASE_DIR/dunst/dunstrc.d/current-theme.conf"
+ln -snf "$HOME/.config/zathura/$choice" "$HOME/.config/zathura/theme"
+echo "$choice" >"$HOME/.config/nvim/.current-theme"
+echo $choice >"$HOME/.config/cosmic/current-theme"
+
+case "$choice" in
+catppuccin)
+  gtk_theme="Catppuccin-Dark"
+  ;;
+everforest)
+  gtk_theme="Everforest-Dark"
+  ;;
+nord)
+  gtk_theme="Nordic"
+  ;;
+esac
+
+dconf write /org/gnome/desktop/interface/gtk-theme \'"$gtk_theme"\'
+
+sed -i -e "/gtk-theme-name/s/=.*/=$gtk_theme/" "$HOME"/.config/gtk-{3,4}.0/settings.ini
+
+if [ -d "/usr/share/themes/$gtk_theme/gtk-4.0" ]; then
+  ln -sf "/usr/share/themes/$gtk_theme/gtk-4.0/gtk.css" "$HOME/.config/gtk-4.0/"
+  ln -sf "/usr/share/themes/$gtk_theme/gtk-4.0/gtk-dark.css" "$HOME/.config/gtk-4.0/" 2>/dev/null
+  ln -sf "/usr/share/themes/$gtk_theme/gtk-4.0/assets" "$HOME/.config/gtk-4.0/" 2>/dev/null
+fi
+
+if [ -d "$HOME/.themes/$gtk_theme/gtk-4.0" ]; then
+  ln -sf "$HOME/.themes/$gtk_theme/gtk-4.0/gtk.css" "$HOME/.config/gtk-4.0/"
+  ln -sf "$HOME/.themes/$gtk_theme/gtk-4.0/gtk-dark.css" "$HOME/.config/gtk-4.0/" 2>/dev/null
+  ln -sf "$HOME/.themes/$gtk_theme/gtk-4.0/assets" "$HOME/.config/gtk-4.0/" 2>/dev/null
+fi
+
+pkill swaybg
+
+dunstctl reload
+
+hyprctl reload
+
+touch "$BASE_DIR/alacritty/alacritty.toml"
+
+dunstify "Theme Changed" "Applied $choice theme"

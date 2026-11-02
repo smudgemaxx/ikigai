@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+currentTheme=$(cat ~/.config/cosmic/current-theme)
+
+wallDir=~/.config/cosmic/walls
+
+indexFile=~/.config/cosmic/wallIndex
+
+wallIndex=$(cat $indexFile)
+
+mapfile array < <(ls $wallDir)
+
+arrayLength=${#array[@]}
+
+if ((((wallIndex + 1)) < arrayLength)); then
+  echo $((wallIndex + 1)) >$indexFile
+  toBeApplied=$((wallIndex + 1))
+else
+  echo 0 >$indexFile
+  toBeApplied=0
+fi
+
+pkill swaybg
+swaybg -m fill -i "$wallDir""/"${array[$toBeApplied]} &
